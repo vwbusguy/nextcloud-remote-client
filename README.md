@@ -7,7 +7,7 @@ Show help:
 
 `./nrc --help`
 ```
-usage: nrc [-h] {files,file,users,user} ...
+usage: nrc [-h] {files,file,users,user,weather} ...
 
 Remote CLI for Nextcloud Server
 
@@ -15,10 +15,12 @@ options:
   -h, --help            show this help message and exit
 
 service:
-  {files,file,users,user}
+  {files,file,users,user,weather}
                         service --help
     files (file)        Interact with files in Nextcloud
     users (user)        User management in Nextcloud
+    weather             Weather forecast
+
 ```
 
 List files:
