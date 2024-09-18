@@ -96,7 +96,7 @@ def files_handler(args):
             sys.exit('No command for files was given.')
         case 'list' | 'ls':
             files = FilesHandler.list(args.path,args.recursive)
-            print("\n".join([repr(f.user_path) for f in files]))
+            print("\n".join([repr(f.full_path) for f in files]))
             return 0
         case _:
             sys.exit(f"{args.command} hasn't been implemented yet.")
