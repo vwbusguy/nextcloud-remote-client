@@ -20,7 +20,7 @@
 #  MA 02110-1301, USA.
 #  
 
-import argparse, os,sys
+import argparse, nc_py_api, os, sys
 from nc_py_api import Nextcloud
 
 # Structure/Interface Classes
@@ -28,27 +28,58 @@ class FilesInterface(object):
     def __init__(self,nc):
         self._nc = nc
 
-    def _files_list(self,path:str='/',depth:int=1):
+    def _files_list(self,path:str='/',depth:int=1) -> list[object]:
         return self._nc.files.listdir(path=path, depth=depth)
+
+    def _get_file_specific(self,path:str) -> object:
+        return self._nc.files.by_path(path=path)
+
+    def _mkdir(self,path:str) -> object:
+        return self._nc.files.makedirs(path)
+
+    def _upload_file(self,nc_path:str,file_obj:bytes) -> object:
+        return self._nc.files.upload_stream(path=nc_path,fp=file_obj)
         
-    def list(self,path:str='/',recursive:bool=False):
+    def list(self,path:str='/',recursive:bool=False) -> list[object]:
         depth = -1 if recursive else 1
-        return self._files_list(path,depth)
+        files = self._files_list(path,depth)
+        if files is None or len(files) == 0:
+            res = self._get_file_specific(path)
+            files = [res] if res else []
+        return files
+
+    def mkdir(self,path:str, exist_ok=True) -> object:
+        return self._mkdir(path)
+
+    def upload(self, nc_path:str, file_obj:bytes, clobber:bool=False) -> bool:
+        if not clobber:
+            try:
+                if self._get_file_specific(nc_path) is not None:
+                    sys.exit('File already exists on the server but clobber was not specified.  Will not upload.')
+            except nc_py_api._exceptions.NextcloudException:
+                pass
+        try:
+            self._upload_file(nc_path,file_obj)
+            assert self._get_file_specific(nc_path) is not None, 'Could not verify the file after upload.'
+            return True
+        except Exception as e:
+            print(f'Failed to upload to {nc_path}.  Maybe the directory does not yet exist?  Try "files mkdir" first.\n\nHere is some more info:\n{e}')
+        return False
 
 class UsersInterface(object):
     def __init__(self,nc):
         self._nc = nc
     
-    def _get_current(self):
+    def _get_current(self) -> object:
         return self._nc.user_status.get_current()
     
-    def _get_list(self):
+    def _get_list(self) -> object:
         return self._nc.user_status.get_list()
         
-    def get_current(self):
+    def get_current(self) -> object:
         return self._get_current()
     
-    def get_list(self):
+    def get_list(self) -> object:
         return self._get_list()
 
 # Initialization Functions
@@ -77,6 +108,16 @@ def parse_args():
     parser_files_ls = parser_files_subparser.add_parser('ls', aliases=['list'], help='List files')
     parser_files_ls.add_argument('path', default='/', help='Path to list in Nextcloud')
     parser_files_ls.add_argument('-r','--recursive', action=argparse.BooleanOptionalAction)
+
+    ### files mkdir parser
+    parser_files_mkdir = parser_files_subparser.add_parser('mkdir', help='Create a new directory path in Nextcloud')
+    parser_files_mkdir.add_argument('newdir', help='Path for new directory location in Nextcloud.')
+
+    ### files upload parser
+    parser_files_put = parser_files_subparser.add_parser('upload', aliases=['put'], help='Upload files to Nextcloud')
+    parser_files_put.add_argument('--local-file', required=True, help='Local path to the file to upload')
+    parser_files_put.add_argument('--nc-path', required=True, help='Path on Nextcloud to store the file')
+    parser_files_put.add_argument('--clobber', action=argparse.BooleanOptionalAction, help='Whether or not to overwrite an existing file.')
     
     ## Users Interface
     parser_users = subparsers.add_parser('users', aliases=['user'], help='User management in Nextcloud')
@@ -98,6 +139,13 @@ def files_handler(args):
             files = FilesHandler.list(args.path,args.recursive)
             print("\n".join([repr(f.full_path) for f in files]))
             return 0
+        case 'mkdir':
+            return FilesHandler.mkdir(args.newdir)
+        case 'put' | 'upload':
+            if not os.path.isfile(args.local_file):
+                sys.exit(f"{args.local_file} doesn't exist, is not a regular file, or you do not have access to it.")
+            with open(args.local_file,'rb') as fd:
+                return FilesHandler.upload(args.nc_path,args.local_file,args.clobber)
         case _:
             sys.exit(f"{args.command} hasn't been implemented yet.")
 
