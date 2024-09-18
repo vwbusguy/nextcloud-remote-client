@@ -4,7 +4,8 @@ The (unofficial) Nextcloud Remote Client CLI is a client side CLI to interact wi
 ## Example usage
 
 Show help:
-./nrc --help
+
+`./nrc --help`
 ```
 usage: nrc [-h] {files,file,users,user} ...
 
@@ -21,7 +22,8 @@ service:
 ```
 
 List files:
-./nrc files ls . /r  
+
+`./nrc files ls / -r`  
 ```
 'Documents/'
 'Documents/Example.md'
@@ -34,7 +36,8 @@ List files:
 ```
 
 List users:
-./nrc users list
+
+`./nrc users list`
 ```
 User: admin
 Status: None
