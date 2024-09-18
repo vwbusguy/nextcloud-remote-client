@@ -1,0 +1,144 @@
+#!/usr/bin/env python
+#
+#  nrc -- Nextcloud Remote CLI
+#  
+#  Copyright 2024 Scott Williams <scott@samus>
+#  
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#  MA 02110-1301, USA.
+#  
+
+import argparse, os,sys
+from nc_py_api import Nextcloud
+
+# Structure/Interface Classes
+class FilesInterface(object):
+    def __init__(self,nc):
+        self._nc = nc
+
+    def _files_list(self,path:str='/',depth:int=1):
+        return self._nc.files.listdir(path=path, depth=depth)
+        
+    def list(self,path:str='/',recursive:bool=False):
+        depth = -1 if recursive else 1
+        return self._files_list(path,depth)
+
+class UsersInterface(object):
+    def __init__(self,nc):
+        self._nc = nc
+    
+    def _get_current(self):
+        return self._nc.user_status.get_current()
+    
+    def _get_list(self):
+        return self._nc.user_status.get_list()
+        
+    def get_current(self):
+        return self._get_current()
+    
+    def get_list(self):
+        return self._get_list()
+
+# Initialization Functions
+def init_nc():
+    nc_conn = {
+        "nextcloud_url" : os.getenv('NEXTCLOUD_SERVER'),
+        "nc_auth_user" : os.getenv('NEXTCLOUD_USER'),
+        "nc_auth_pass" : os.getenv('NEXTCLOUD_PASS')
+    }
+    return Nextcloud(**nc_conn)
+
+def parse_args():
+    # Create global interface parser 
+    parser = argparse.ArgumentParser(
+        prog='Nextcloud Remote CLI',
+        description='Remote CLI for Nextcloud Server',
+        )
+    # Create Interface commands
+    subparsers = parser.add_subparsers(title="service", dest="service", required=True, help='service --help')
+    
+    ## Files Interface
+    parser_files = subparsers.add_parser('files', aliases=['file'], help='Interact with files in Nextcloud')
+    parser_files_subparser = parser_files.add_subparsers(title="action", required=True, dest="command")
+    
+    ### files ls parser
+    parser_files_ls = parser_files_subparser.add_parser('ls', aliases=['list'], help='List files')
+    parser_files_ls.add_argument('path', default='/', help='Path to list in Nextcloud')
+    parser_files_ls.add_argument('-r','--recursive', action=argparse.BooleanOptionalAction)
+    
+    ## Users Interface
+    parser_users = subparsers.add_parser('users', aliases=['user'], help='User management in Nextcloud')
+    parser_users_subparser = parser_users.add_subparsers(title='action', required=True, dest="command")
+    
+    ### Users subcommands
+    parser_users_whoami = parser_users_subparser.add_parser('whoami', aliases=['me'], help='Get Current user')
+    parser_users_list = parser_users_subparser.add_parser('ls', aliases=['list'], help='Return a list of users.')
+    
+    return parser.parse_args()
+
+# Flow functions
+def files_handler(args):
+    FilesHandler = FilesInterface(nc)
+    match args.command:
+        case None:
+            sys.exit('No command for files was given.')
+        case 'list' | 'ls':
+            files = FilesHandler.list(args.path,args.recursive)
+            print("\n".join([repr(f.user_path) for f in files]))
+            return 0
+        case _:
+            sys.exit(f"{args.command} hasn't been implemented yet.")
+
+def users_handler(args):
+    UsersHandler = UsersInterface(nc)
+    match args.command:
+        case None:
+            sys.exit('No command for users was given.')
+        case 'ls' | 'list':
+            users = UsersHandler.get_list()
+            for user in users:
+                print(f'User: {user.user_id}\nStatus: {user.status_message}')
+            return 0
+        case 'whoami' | 'me':
+            user = UsersHandler.get_current()
+            print(f'User: {user.user_id}\nStatus: {user.status_message}')
+            return 0
+        case _:
+            sys.exit(f"{args.command} hasn't been implemented yet.")
+
+# Main
+def main(args):
+    nc = init_nc()
+    match args.service:
+        case None:
+            sys.exit('Please provide a service to interact with.')
+        case 'files' | 'file':
+            return files_handler(args)
+        case 'users' | 'user':
+            return users_handler(args)
+        case _:
+            sys.exit(f"{args.service} hasn't been implented yet.")
+    return 0
+
+if __name__ == "__main__":
+    args = parse_args()
+    try:
+        nc = init_nc()
+    except Exception as e:
+        sys.exit('''Could not connect to remote Nextcloud Server.  Please set the follow environment variables first:
+        NEXTCLOUD_SERVER -- URL for the remote nextcloud server
+        NEXTCLOUD_USER -- Nextcloud User
+        NEXTCLOUD_PASS -- Application Token (preferably) or User Password''')
+    sys.exit(main(args))
