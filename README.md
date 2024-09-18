@@ -1,5 +1,5 @@
 # nextcloud-remote-client
-Nextcloud Remote Client CLI is a client side CLI to interact with [Nextcloud](https://nextcloud.com) servers via a container or command line.  It uses the [Nextcloud Python API](https://github.com/cloud-py-api/nc_py_api) and does not require enabling anything special on the server side in order to use.
+The (unofficial) Nextcloud Remote Client CLI is a client side CLI to interact with [Nextcloud](https://nextcloud.com) servers via a container or command line.  It uses the [Nextcloud Python API](https://github.com/cloud-py-api/nc_py_api) and does not require enabling anything special on the server side in order to use.
 
 ## Example usage
 
