@@ -82,6 +82,22 @@ class UsersInterface(object):
     def get_list(self) -> object:
         return self._get_list()
 
+class WeatherInterface(object):
+    def __init__(self,nc):
+        self._nc = nc
+        self.available = self._nc.weather_status.available
+    
+    def _get_forecast(self) -> list[dict]:
+        return self._nc.weather_status.get_forecast() 
+
+    def get_forecast(self) -> list[dict] | None:
+        try:
+            res = self._get_forecast()
+            return res
+        except nc_py_api._exceptions.NextcloudExceptionNotFound as e:
+            print("Failed to fetch the forecast.  Is your weather location set?")
+        return None
+        
 # Initialization Functions
 def init_nc():
     nc_conn = {
@@ -127,6 +143,13 @@ def parse_args():
     parser_users_whoami = parser_users_subparser.add_parser('whoami', aliases=['me'], help='Get Current user')
     parser_users_list = parser_users_subparser.add_parser('ls', aliases=['list'], help='Return a list of users.')
     
+    ## Weather Interface
+    parser_weather = subparsers.add_parser('weather', help='Weather forecast')
+    parser_weather_subparser = parser_weather.add_subparsers(title="action", required=False, dest="command")
+    
+    ### Weather subcommands
+    parser_weather_forecast = parser_weather_subparser.add_parser('forecast', help='Return forecast for user-defined location.')
+    
     return parser.parse_args()
 
 # Flow functions
@@ -166,6 +189,19 @@ def users_handler(args):
         case _:
             sys.exit(f"{args.command} hasn't been implemented yet.")
 
+def weather_handler(args):
+    WeatherHandler = WeatherInterface(nc)
+    if not WeatherHandler.available:
+        print('Weather is not available on this instance or for your current user.  Please ask your admin to enable it.')
+        return 1
+    match args.command:
+        case None | 'forecast':
+            res = WeatherHandler.get_forecast()
+            if res is None: return 1
+            for i in range(4):
+                for k,v in res[i].items():
+                    print(f'{k}:{v}\n')
+
 # Main
 def main(args):
     nc = init_nc()
@@ -176,6 +212,8 @@ def main(args):
             return files_handler(args)
         case 'users' | 'user':
             return users_handler(args)
+        case 'weather':
+            return weather_handler(args)
         case _:
             sys.exit(f"{args.service} hasn't been implented yet.")
     return 0
