@@ -63,8 +63,14 @@ export NEXTCLOUD_PASS='password'
 
 To run this locally, you will need python3:
 
-```
+```sh
 python -m venv env
 source env/bin/activate
 ./nrc files ls
+```
+
+Alternatively, build and run a container locally:
+```sh
+podman build -t localhost/nrc .
+podman run -it --rm -e'NEXTCLOUD_SERVER=https://your-nextcloud.com' -e'NEXTCLOUD_USER=admin' -e'NEXTCLOUD_PASS=password' localhost/nrc files ls / -r
 ```
