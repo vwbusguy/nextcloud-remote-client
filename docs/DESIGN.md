@@ -32,3 +32,30 @@ Resources refer to a specific Nextcloud service or API Resource, such as "files"
 ## Server
 
 This tool is an (unofficial) client for a [Nextcloud](https://nextcloud.com/) server.  References to a "server" refer to a remote [Nextcloud Server](https://github.com/nextcloud/server).
+
+# Future Plans
+
+This section captures brainstorming and contribution opportnities for expanding the feature set of this client.  This section is organized by Resource.
+
+## Files
+
+Future plans for the Files resource.
+
+### download
+
+Download files individually or in bulk, defaulting to the current directory and source remote file/directory name for the destination path. 
+
+### ls (list)
+
+Expand this to include extended information, list by user (assuming credential capability), list by file size, list by created/modified.
+
+### sharing (share)
+
+Manage sharing of files including querying, creating, updating, and removing share options to other users as well as by link.  Users should specifically be able to upload and share an arbitrary file as easily as possible.
+
+### upload (put)
+
+Expand this to include bulk operations, such as uploading a whole directory, passing multiple files at once to the same directory, or extracting the contents of a zip/tarball archive to a directory on the server.
+
+Option to [create files based on IO input](https://github.com/cloud-py-api/nc_py_api/blob/main/nc_py_api/files/files.py#L123), such as streaming the output from another command passed as a pipe and read via stdin.
+
