@@ -76,3 +76,7 @@ Alternatively, build and run a container locally:
 podman build -t localhost/nrc .
 podman run -it --rm -e'NEXTCLOUD_SERVER=https://your-nextcloud.com' -e'NEXTCLOUD_USER=admin' -e'NEXTCLOUD_PASS=password' localhost/nrc files ls / -r
 ```
+
+## Contributing
+
+There is plenty of low-hanging fruit.  Please refer to the "Future Plans" section of the [DESIGN](docs/DESIGN.md#future-plans) docs.  Most stuff currently there simply needs wired in with the upstream library.
