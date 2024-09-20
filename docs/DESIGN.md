@@ -59,3 +59,10 @@ Expand this to include bulk operations, such as uploading a whole directory, pas
 
 Option to [create files based on IO input](https://github.com/cloud-py-api/nc_py_api/blob/main/nc_py_api/files/files.py#L123), such as streaming the output from another command passed as a pipe and read via stdin.
 
+## Users
+
+Future plans for the [Users resource](https://github.com/cloud-py-api/nc_py_api/blob/main/nc_py_api/users.py#L159).
+
+Persuant to their server capabilities, regular users should be able to search for other users, display and set their personal attributes, and see their quotas. 
+
+Nextcloud Admins should be able to manage users, such as creation/deleation, activating/deactivating, setting quoatas, and viewing/curating group membership.
